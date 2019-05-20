@@ -1,7 +1,7 @@
 # tnt
 Fork of https://github.com/minetest/minetest_game/tree/master/mods/tnt
 
-This tnt mod attempts to recreated mc style tnt in mt.
+This tnt mod attempts make TNT act like mc-style TNT.
 
 Minetest Game mod: tnt
 ======================

@@ -1,5 +1,3 @@
-tnt = {}
-
 -- Default to enabled when in singleplayer
 local enable_tnt = minetest.settings:get_bool("enable_tnt")
 if enable_tnt == nil then
@@ -9,8 +7,8 @@ end
 -- loss probabilities array (one in X will be lost)
 local loss_prob = {}
 
---loss_prob["default:cobble"] = 3
---loss_prob["default:dirt"] = 4
+loss_prob["default:cobble"] = 3
+loss_prob["default:dirt"] = 4
 
 local tnt_radius = tonumber(minetest.settings:get("tnt_radius") or 3)
 
@@ -30,7 +28,7 @@ end)
 
 -- Fill a list with data for content IDs, after all nodes are registered
 local cid_data = {}
-minetest.after(0, function()
+minetest.register_on_mods_loaded(function()
 	for name, def in pairs(minetest.registered_nodes) do
 		cid_data[minetest.get_content_id(name)] = {
 			name = name,
@@ -409,172 +407,7 @@ function tnt.boom(pos, def, owner, in_water)
 		" with radius " .. radius)
 end
 
-minetest.register_node("tnt:gunpowder", {
-	description = "Gun Powder",
-	drawtype = "raillike",
-	paramtype = "light",
-	is_ground_content = false,
-	sunlight_propagates = true,
-	walkable = false,
-	tiles = {
-		"tnt_gunpowder_straight.png",
-		"tnt_gunpowder_curved.png",
-		"tnt_gunpowder_t_junction.png",
-		"tnt_gunpowder_crossing.png"
-	},
-	inventory_image = "tnt_gunpowder_inventory.png",
-	wield_image = "tnt_gunpowder_inventory.png",
-	selection_box = {
-		type = "fixed",
-		fixed = {-1/2, -1/2, -1/2, 1/2, -1/2+1/16, 1/2},
-	},
-	groups = {dig_immediate = 2, attached_node = 1, flammable = 5,
-		connect_to_raillike = minetest.raillike_group("gunpowder")},
-	sounds = default.node_sound_leaves_defaults(),
-
-	on_punch = function(pos, node, puncher)
-		local item_name = puncher:get_wielded_item():get_name()
-		local player_name = puncher:get_player_name()
-		if item_name == "default:torch" then
-			if minetest.is_protected(pos, player_name) then
-				minetest.chat_send_player(player_name, "This area is protected")
-				return
-			end
-			minetest.set_node(pos, {name = "tnt:gunpowder_burning"})
-		end
-	end,
-	on_blast = function(pos, intensity)
-		minetest.set_node(pos, {name = "tnt:gunpowder_burning"})
-	end,
-	on_burn = function(pos)
-		minetest.set_node(pos, {name = "tnt:gunpowder_burning"})
-	end,
-	on_ignite = function(pos, igniter)
-		minetest.set_node(pos, {name = "tnt:gunpowder_burning"})
-	end,
-})
-
-minetest.register_node("tnt:gunpowder_burning", {
-	drawtype = "raillike",
-	paramtype = "light",
-	sunlight_propagates = true,
-	walkable = false,
-	light_source = 5,
-	tiles = {{
-		name = "tnt_gunpowder_burning_straight_animated.png",
-		animation = {
-			type = "vertical_frames",
-			aspect_w = 16,
-			aspect_h = 16,
-			length = 1,
-		}
-	},
-	{
-		name = "tnt_gunpowder_burning_curved_animated.png",
-		animation = {
-			type = "vertical_frames",
-			aspect_w = 16,
-			aspect_h = 16,
-			length = 1,
-		}
-	},
-	{
-		name = "tnt_gunpowder_burning_t_junction_animated.png",
-		animation = {
-			type = "vertical_frames",
-			aspect_w = 16,
-			aspect_h = 16,
-			length = 1,
-		}
-	},
-	{
-		name = "tnt_gunpowder_burning_crossing_animated.png",
-		animation = {
-			type = "vertical_frames",
-			aspect_w = 16,
-			aspect_h = 16,
-			length = 1,
-		}
-	}},
-	selection_box = {
-		type = "fixed",
-		fixed = {-1/2, -1/2, -1/2, 1/2, -1/2+1/16, 1/2},
-	},
-	drop = "",
-	groups = {
-		dig_immediate = 2,
-		attached_node = 1,
-		connect_to_raillike = minetest.raillike_group("gunpowder")
-	},
-	sounds = default.node_sound_leaves_defaults(),
-	on_timer = function(pos, elapsed)
-		for dx = -1, 1 do
-		for dz = -1, 1 do
-			if math.abs(dx) + math.abs(dz) == 1 then
-				for dy = -1, 1 do
-					tnt.burn({
-						x = pos.x + dx,
-						y = pos.y + dy,
-						z = pos.z + dz,
-					})
-				end
-			end
-		end
-		end
-		minetest.remove_node(pos)
-	end,
-	-- unaffected by explosions
-	on_blast = function() end,
-	on_construct = function(pos)
-		minetest.sound_play("tnt_gunpowder_burning", {pos = pos, gain = 2})
-		minetest.get_node_timer(pos):start(1)
-	end,
-})
-
-minetest.register_craft({
-	output = "tnt:gunpowder 5",
-	type = "shapeless",
-	recipe = {"default:coal_lump", "default:gravel"}
-})
-
-minetest.register_craftitem("tnt:tnt_stick", {
-	description = "TNT Stick",
-	inventory_image = "tnt_tnt_stick.png",
-	groups = {flammable = 5},
-})
-
-if enable_tnt then
-	minetest.register_craft({
-		type = "shapeless",
-		output = "tnt:tnt_stick",
-		recipe = {
-			"tnt:gunpowder", 
-			"default:paper",
-		}
-	})
-
-	minetest.register_craft({
-		output = "tnt:tnt",
-		recipe = {
-			{"group:wood",    "tnt:gunpowder", "group:wood"},
-			{"tnt:gunpowder", "tnt:gunpowder", "tnt:gunpowder"},
-			{"group:wood",    "tnt:gunpowder", "group:wood"}
-		}
-	})
-
-	minetest.register_abm({
-		label = "TNT ignition",
-		nodenames = {"group:tnt", "tnt:gunpowder"},
-		neighbors = {"fire:basic_flame", "default:lava_source", "default:lava_flowing"},
-		interval = 4,
-		chance = 1,
-		action = function(pos, node)
-			tnt.burn(pos, node.name)
-		end,
-	})
-end
-
-local function create_entity(pos, name, owner, jump, def, props)
+local function create_entity(pos, name, owner, jump, def)
 	local obj
 	local ent
 
@@ -582,7 +415,7 @@ local function create_entity(pos, name, owner, jump, def, props)
 		obj = minetest.add_entity(pos, name)
 		ent = obj:get_luaentity()
 	else
-		obj = minetest.add_entity(pos, "Empty_tnt_entity")
+		obj = minetest.add_entity(pos, "tnt_revamped:empty_tnt_entity")
 		ent = obj:get_luaentity()
 		ent.def = def
 	end
@@ -609,10 +442,6 @@ local function create_entity(pos, name, owner, jump, def, props)
 		minetest.set_node(pos, {name = oldnode})
 	else
 		minetest.remove_node(pos)
-	end
-
-	if props then
-		obj:set_properties(props)
 	end
 
 	return obj
@@ -712,10 +541,13 @@ function tnt.register_tnt(def)
 	local tnt_side = def.tiles.side or def.name .. "_side.png"
 	local tnt_burning = def.tiles.burning or def.name .. "_top_burning_animated.png"
 	if not def.damage_radius then def.damage_radius = def.radius * 2 end
-
+	if not def.time then def.time = 4 end
+	if not def.jump then def.jump = 3 end
+	
 	if enable_tnt then
 		tnt.registered_tnts[name] = true
-		minetest.register_node(":" .. name, {
+
+		local node_def = {
 			description = def.description,
 			tiles = {tnt_top, tnt_bottom, tnt_side},
 			is_ground_content = false,
@@ -754,11 +586,15 @@ function tnt.register_tnt(def)
 			on_ignite = function(pos, igniter)
 				create_entity(pos, name .. "_flying", nil, def.jump)
 			end,
-		})
-	
+		}
+		if not minetest.registered_nodes[name] then
+			minetest.register_node(":" .. name, node_def)
+		else
+			minetest.override_item(name, node_def)
+		end
 	end
-	
-	minetest.register_node(":" .. name .. "_burning", {
+
+	local burning_node_def = {
 		tiles = {
 			{
 				name = tnt_burning,
@@ -771,11 +607,17 @@ function tnt.register_tnt(def)
 			},
 			tnt_bottom, tnt_side
 		},
-	})
+	}
+
+	if not tnt.registered_tnts[name .. "_burning"] then
+		minetest.register_node(":" .. name .. "_burning", burning_node_def)
+	else
+		minetest.override_item(name .. "_burning", burning_node_def)
+	end
 	
 	flying_entitys[name .. "_flying"] = true
 
-	minetest.register_entity(name .. "_flying", {
+	minetest.register_entity(":" .. name .. "_flying", {
 		name = name .. "_flying",
 		textures = {
 			name .. "_burning"
@@ -822,13 +664,13 @@ function tnt.register_tnt(def)
 			end
 			
 			if self.time <= 0 then
-					if water_nodes[minetest.get_node(pos).name] then
-						tnt.boom(pos, def, self.owner, true)
-					else
-						tnt.boom(pos, def, self.owner, false)
-					end
+				if water_nodes[minetest.get_node(pos).name] then
+					tnt.boom(pos, def, self.owner, true)
+				else
+					tnt.boom(pos, def, self.owner, false)
+				end
 
-					self.object:remove()
+				self.object:remove()
 			end
 		end,
 		on_blast = function(pos, intensity, blaster)
@@ -850,7 +692,7 @@ function tnt.register_tnt(def)
 	})
 end
 
-minetest.register_entity("tnt:empty_tnt_entity", {
+minetest.register_entity("tnt_revamped:empty_tnt_entity", {
 	name = "empty_tnt_entity",
 	initial_properties = {
 		timer = 0,
@@ -895,13 +737,13 @@ minetest.register_entity("tnt:empty_tnt_entity", {
 		end
 		
 		if self.time <= 0 then
-				if water_nodes[minetest.get_node(pos).name] then
-					tnt.boom(pos, self.def, self.owner, true)
-				else
-					tnt.boom(pos, self.def, self.owner, false)
-				end
+			if water_nodes[minetest.get_node(pos).name] then
+				tnt.boom(pos, self.def, self.owner, true)
+			else
+				tnt.boom(pos, self.def, self.owner, false)
+			end
 
-				self.object:remove()
+			self.object:remove()
 		end
 	end,
 	on_blast = function(pos, intensity, blaster)
@@ -922,6 +764,8 @@ minetest.register_entity("tnt:empty_tnt_entity", {
 		end
 	end,
 })
+
+flying_entitys["tnt_revamped:empty_tnt_entity"] = true
 
 tnt.register_tnt({
 	name = "tnt:tnt",

@@ -1,7 +1,7 @@
 # tnt
 Fork of [tnt](https://github.com/minetest/minetest_game/tree/master/mods/tnt)
 
-#Features 
+# Features 
 
 1. TNT is always entity on ignite.
 

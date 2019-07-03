@@ -609,7 +609,7 @@ function tnt.register_tnt(def)
 		},
 	}
 
-	if not tnt.registered_tnts[name .. "_burning"] then
+	if not minetest.registered_nodes[name .. "_burning"] then
 		minetest.register_node(":" .. name .. "_burning", burning_node_def)
 	else
 		minetest.override_item(name .. "_burning", burning_node_def)
@@ -767,13 +767,15 @@ minetest.register_entity("tnt_revamped:empty_tnt_entity", {
 
 flying_entitys["tnt_revamped:empty_tnt_entity"] = true
 
-tnt.register_tnt({
-	name = "tnt:tnt",
-	description = "TNT",
-	radius = tnt_radius,
-	time = 4,
-	jump = 3,
-})
+if minetest.registered_nodes["tnt:tnt"] then
+	tnt.register_tnt({
+		name = "tnt:tnt",
+		description = "TNT",
+		radius = tnt_radius,
+		time = 4,
+		jump = 3,
+	})
+end
 
 minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack, pointed_thing)
 	if tnt.registered_tnts[newnode.name] then

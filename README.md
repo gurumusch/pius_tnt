@@ -18,6 +18,9 @@ water flow code copied from TenPlus1's builtin_item mod [builtin_item](https://n
 Authors of source code
 ----------------------
 PilzAdam (MIT)
+
 ShadowNinja (MIT)
+
 sofar (sofar@foo-projects.org) (MIT)
+
 Various Minetest developers and contributors (MIT)

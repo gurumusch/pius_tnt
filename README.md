@@ -1,7 +1,15 @@
 # tnt
-Fork of https://github.com/minetest/minetest_game/tree/master/mods/tnt
+Fork of [tnt](https://github.com/minetest/minetest_game/tree/master/mods/tnt)
 
-This tnt mod attempts make TNT act like mc-style TNT.
+#Features 
+
+1. TNT is always entity on ignite.
+
+2. TNT entitys flow in water.
+
+3. TNT jumps on ignite.
+
+4. It is possible to make minecraft style TNT cannons with this mod.
 
 Minetest Game mod: tnt
 ======================

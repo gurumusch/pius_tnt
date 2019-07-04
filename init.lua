@@ -283,7 +283,7 @@ function tnt.burn(pos, nodename)
 	elseif def.on_ignite then
 		def.on_ignite(pos)
 	elseif minetest.get_item_group(name, "tnt") > 0 then
-		create_entity(pos, name .. "_flying", nil, def.jump)
+		tnt.create_entity(pos, name .. "_flying", nil, def.jump)
 		minetest.sound_play("tnt_ignite", {pos = pos})
 	end
 end
@@ -410,7 +410,7 @@ function tnt.boom(pos, def, owner, in_water)
 		" with radius " .. radius)
 end
 
-local function create_entity(pos, name, owner, jump, def)
+function tnt.create_entity(pos, name, owner, jump, def)
 	local obj
 	local ent
 
@@ -570,24 +570,24 @@ function tnt.register_tnt(def)
 						minetest.chat_send_player(player_name, "This area is protected")
 						return
 					end
-					create_entity(pos, name .. "_flying", player_name, def.jump)
+					tnt.create_entity(pos, name .. "_flying", player_name, def.jump)
 				end
 			end,
 			on_blast = function(pos, intensity, blaster)
-				create_entity(pos, name .. "_flying", nil, def.jump)
+				tnt.create_entity(pos, name .. "_flying", nil, def.jump)
 			end,
 			mesecons = {effector =
 				{action_on =
 					function(pos)
-						create_entity(pos, name .. "_flying", nil, def.jump)
+						tnt.create_entity(pos, name .. "_flying", nil, def.jump)
 					end
 				}
 			},
 			on_burn = function(pos)
-				create_entity(pos, name .. "_flying", nil, def.jump)
+				tnt.create_entity(pos, name .. "_flying", nil, def.jump)
 			end,
 			on_ignite = function(pos, igniter)
-				create_entity(pos, name .. "_flying", nil, def.jump)
+				tnt.create_entity(pos, name .. "_flying", nil, def.jump)
 			end,
 		}
 		if not minetest.registered_nodes[name] then

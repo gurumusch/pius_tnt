@@ -11,11 +11,12 @@ loss_prob["default:cobble"] = 3
 loss_prob["default:dirt"] = 4
 
 local tnt_radius = tonumber(minetest.settings:get("tnt_radius") or 3)
+local tnt_entity_velocity_mul = tonumber(minetest.settings:get("tnt_revamped.entity_velocity_mul") or 2)
+local tnt_damage_nodes = minetest.settings:get_bool("tnt_revamped.damage_nodes") or false
+local tnt_damage_entities = minetest.settings:get_bool("tnt_revamped.damage_entities") or false
 
 local flying_entitys = {}
-
 tnt.registered_tnts = {}
-
 local water_nodes = {}
 
 minetest.register_on_mods_loaded(function() 
@@ -70,8 +71,8 @@ local function eject_drops(drops, pos, radius)
 			local obj = minetest.add_item(drop_pos, dropitem)
 			if obj then
 				obj:get_luaentity().collect = true
-				obj:setacceleration({x = 0, y = -10, z = 0})
-				obj:setvelocity({x = math.random(-3, 3),
+				obj:set_acceleration({x = 0, y = -10, z = 0})
+				obj:set_velocity({x = math.random(-3, 3),
 						y = math.random(0, 10),
 						z = math.random(-3, 3)})
 			end
@@ -158,7 +159,7 @@ local function calc_velocity(pos1, pos2, old_vel, power)
 	return vel
 end
 
-local function entity_physics(pos, radius, drops)
+local function entity_physics(pos, radius, drops, in_water)
 	local objs = minetest.get_objects_inside_radius(pos, radius)
 	for _, obj in pairs(objs) do
 		local obj_pos = obj:get_pos()
@@ -173,9 +174,11 @@ local function entity_physics(pos, radius, drops)
 			local moveoff = vector.multiply(dir, dist + 1.0)
 			local newpos = vector.add(pos, moveoff)
 			newpos = vector.add(newpos, {x = 0, y = 0.2, z = 0})
-			obj:setpos(newpos)
+			obj:set_pos(newpos)
 
-			obj:set_hp(obj:get_hp() - damage)
+			if not in_water or (in_water and tnt_damage_entities) then
+				obj:set_hp(obj:get_hp() - damage)
+			end
 		elseif not flying_entitys[obj:get_entity_name()] then
 			local do_damage = true
 			local do_knockback = true
@@ -188,11 +191,11 @@ local function entity_physics(pos, radius, drops)
 			end
 
 			if do_knockback then
-				local obj_vel = obj:getvelocity()
-				obj:setvelocity(calc_velocity(pos, obj_pos,
+				local obj_vel = obj:get_velocity()
+				obj:set_velocity(calc_velocity(pos, obj_pos,
 						obj_vel, radius * 10))
 			end
-			if do_damage then
+			if do_damage and (not in_water or (in_water and tnt_damage_entities)) then
 				if not obj:get_armor_groups().immortal then
 					obj:punch(obj, 1.0, {
 						full_punch_interval = 1.0,
@@ -204,9 +207,9 @@ local function entity_physics(pos, radius, drops)
 				add_drop(drops, item)
 			end
 		else
-			local obj_vel = obj:getvelocity()
-				obj:setvelocity(calc_velocity(pos, obj_pos,
-						obj_vel, radius * 2))
+			local obj_vel = obj:get_velocity()
+				obj:set_velocity(calc_velocity(pos, obj_pos,
+						obj_vel, radius * tnt_entity_velocity_mul))
 		end
 	end
 end
@@ -294,7 +297,7 @@ local function tnt_explode(pos, radius, ignore_protection, ignore_on_blast, owne
 	-- recalculate new radius
 	radius = math.floor(radius * math.pow(1, 1/3))
 
-	if not in_water then
+	if not in_water or tnt_damage_nodes then
 	
 		pos = vector.round(pos)
 		local p1 = vector.subtract(pos, 2)
@@ -398,7 +401,7 @@ function tnt.boom(pos, def, owner, in_water)
 			def1.ignore_on_blast, owner, def1.explode_center, in_water)
 	-- append entity drops
 	local damage_radius = (radius / math.max(1, def1.radius)) * def1.damage_radius
-	entity_physics(pos, damage_radius, drops)
+	entity_physics(pos, damage_radius, drops, in_water)
 	if not def1.disable_drops then
 		eject_drops(drops, pos, radius)
 	end
@@ -426,7 +429,7 @@ local function create_entity(pos, name, owner, jump, def)
 		owner = old_meta:get_string("owner")
 	end
 
-	obj:setacceleration({x = 0, y = -10, z = 0})
+	obj:set_acceleration({x = 0, y = -10, z = 0})
 
 	if jump then
 		obj:set_velocity({x = 0, y = jump, z = 0})

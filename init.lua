@@ -57,6 +57,24 @@ local function rand_pos(center, pos, radius)
 	until def and not def.walkable
 end
 
+-- Just another eject_drops function may get rid of it in the future.
+local function eject_drops2(drops, pos)
+	local drop_pos = vector.new(pos)
+	for _, item in pairs(drops) do
+		local count = item.count or 1
+		local dropitem = ItemStack(item.name)
+		dropitem:set_count(count)
+		local obj = minetest.add_item(drop_pos, dropitem)
+		if obj then
+			obj:get_luaentity().collect = true
+			obj:set_acceleration({x = 0, y = -10, z = 0})
+			obj:set_velocity({x = math.random(-3, 3),
+					y = math.random(0, 10),
+					z = math.random(-3, 3)})
+		end
+	end
+end
+
 local function eject_drops(drops, pos, radius)
 	local drop_pos = vector.new(pos)
 	for _, item in pairs(drops) do
@@ -627,10 +645,12 @@ function tnt.register_tnt(def)
 		},
 		initial_properties = {
 			timer = 0,
-			time = def.time
+			time = def.time,
+			drops = {}
 		},
 		timer = 0,
 		time = def.time,
+		drops = {},
 		visual = "wielditem",
 		visual_size = {x = 0.667, y = 0.667},
 		physical = true,
@@ -672,7 +692,9 @@ function tnt.register_tnt(def)
 				else
 					tnt.boom(pos, def, self.owner, false)
 				end
-
+				if self.drops then
+					eject_drops2(self.drops, pos, def.radius)
+				end
 				self.object:remove()
 			end
 		end,
@@ -680,7 +702,7 @@ function tnt.register_tnt(def)
 			return
 		end,
 		get_staticdata = function(self)
-			return minetest.serialize({timer = self.timer, time = self.time, flow = self.flow, owner = self.owner})
+			return minetest.serialize({timer = self.timer, time = self.time, flow = self.flow, owner = self.owner, drops = self.drops})
 		end,
 		on_activate = function(self, staticdata)
 			self.object:set_armor_groups({immortal = 1})
@@ -690,6 +712,7 @@ function tnt.register_tnt(def)
 				self.time = ds.time
 				self.owner = ds.owner
 				self.flow = ds.flow
+				self.drops = ds.drops
 			end
 		end,
 	})
@@ -699,11 +722,13 @@ minetest.register_entity("tnt_revamped:empty_tnt_entity", {
 	name = "empty_tnt_entity",
 	initial_properties = {
 		timer = 0,
-		time = 0
+		time = 0,
+		drops = {}
 	},
 	timer = 0,
 	time = 0,
 	def = {},
+	drops = {},
 	visual = "wielditem",
 	visual_size = {x = 0.667, y = 0.667},
 	physical = true,
@@ -745,7 +770,9 @@ minetest.register_entity("tnt_revamped:empty_tnt_entity", {
 			else
 				tnt.boom(pos, self.def, self.owner, false)
 			end
-
+			if self.drops then
+				eject_drops2(self.drops, pos, self.def.radius)
+			end
 			self.object:remove()
 		end
 	end,
@@ -753,7 +780,7 @@ minetest.register_entity("tnt_revamped:empty_tnt_entity", {
 		return
 	end,
 	get_staticdata = function(self)
-		return minetest.serialize({timer = self.timer, time = self.time, flow = self.flow, owner = self.owner, def = self.def})
+		return minetest.serialize({timer = self.timer, time = self.time, flow = self.flow, owner = self.owner, def = self.def, drops = self.drops})
 	end,
 	on_activate = function(self, staticdata)
 		self.object:set_armor_groups({immortal = 1})
@@ -764,6 +791,7 @@ minetest.register_entity("tnt_revamped:empty_tnt_entity", {
 			self.owner = ds.owner
 			self.flow = ds.flow
 			self.def = ds.def
+			self.drops = ds.drops
 		end
 	end,
 })

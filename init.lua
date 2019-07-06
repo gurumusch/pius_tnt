@@ -567,13 +567,11 @@ function tnt.register_tnt(def)
 	
 	if enable_tnt then
 		tnt.registered_tnts[name] = true
-
 		local node_def = {
 			description = def.description,
 			tiles = {tnt_top, tnt_bottom, tnt_side},
 			is_ground_content = false,
 			groups = {dig_immediate = 2, mesecon = 2, tnt = 1, flammable = 5, explosive = def.radius},
-			sounds = default.node_sound_wood_defaults(),
 			after_place_node = function(pos, placer)
 				if placer:is_player() then
 					local meta = minetest.get_meta(pos)
@@ -583,7 +581,7 @@ function tnt.register_tnt(def)
 			on_punch = function(pos, node, puncher)
 				local item_name = puncher:get_wielded_item():get_name()
 				local player_name = puncher:get_player_name()
-				if item_name == "default:torch" then
+				if minetest.registered_items[item_name].groups.torch then
 					if minetest.is_protected(pos, player_name) then
 						minetest.chat_send_player(player_name, "This area is protected")
 						return

@@ -1,3 +1,7 @@
+if not tnt then
+	tnt = {}
+end
+
 -- Default to enabled when in singleplayer
 local enable_tnt = minetest.settings:get_bool("enable_tnt")
 if enable_tnt == nil then
@@ -129,7 +133,7 @@ local function destroy(drops, npos, cid, c_air, c_fire,
 			on_blast = def.on_blast
 		}
 		return cid
-	elseif def.flammable then
+	elseif def.flammable and basic_flame_on_construct then
 		on_construct_queue[#on_construct_queue + 1] = {
 			fn = basic_flame_on_construct,
 			pos = vector.new(npos)
@@ -337,9 +341,12 @@ local function tnt_explode(pos, radius, ignore_protection, ignore_on_blast, owne
 		local drops = {}
 		local on_blast_queue = {}
 		local on_construct_queue = {}
-		basic_flame_on_construct = minetest.registered_nodes["fire:basic_flame"].on_construct
+		local c_fire
 
-		local c_fire = minetest.get_content_id("fire:basic_flame")
+		if minetest.registered_nodes["fire:basic_flame"] then
+			basic_flame_on_construct = minetest.registered_nodes["fire:basic_flame"].on_construct
+			c_fire = minetest.get_content_id("fire:basic_flame")
+		end
 		for z = -radius, radius do
 			for y = -radius, radius do
 			local vi = a:index(pos.x + (-radius), pos.y + y, pos.z + z)

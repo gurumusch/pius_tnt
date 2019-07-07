@@ -15,6 +15,26 @@ water flow code copied from TenPlus1's builtin_item mod [builtin_item](https://n
 
 5. TNT does not damage nodes if in water.
 
+# Config
+
+The size of the default tnt blast.
+
+tnt_radius = 3
+
+The number to multiply the TNT's entity knockback velocity on blast.
+
+tnt_revamped.entity_velocity_mul = 2
+
+**In Water**
+
+If true TNT blast will be able to damage nodes even if its in water.
+
+tnt_revamped.damage_nodes = false
+
+If true TNT blast will be able to damage entities even if its in water.
+
+tnt_revamped.damage_entities = false
+
 Authors of source code
 ----------------------
 PilzAdam (MIT)

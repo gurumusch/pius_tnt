@@ -19,21 +19,29 @@ water flow code copied from TenPlus1's builtin_item mod [builtin_item](https://n
 
 The size of the default tnt blast.
 
+``` lua
 tnt_radius = 3
+```
 
 The number to multiply the TNT's entity knockback velocity on blast.
 
+``` lua
 tnt_revamped.entity_velocity_mul = 2
+```
 
 **In Water**
 
 If true TNT blast will be able to damage nodes even if its in water.
 
+``` lua
 tnt_revamped.damage_nodes = false
+```
 
 If true TNT blast will be able to damage entities even if its in water.
 
+``` lua
 tnt_revamped.damage_entities = false
+```
 
 Authors of source code
 ----------------------

@@ -20,7 +20,6 @@ local tnt_damage_nodes = minetest.settings:get_bool("tnt_revamped.damage_nodes")
 local tnt_damage_entities = minetest.settings:get_bool("tnt_revamped.damage_entities") or false
 
 local flying_entitys = {}
-tnt.registered_tnts = {}
 local water_nodes = {}
 
 minetest.register_on_mods_loaded(function() 
@@ -573,7 +572,6 @@ function tnt.register_tnt(def)
 	if not def.jump then def.jump = 3 end
 	
 	if enable_tnt then
-		tnt.registered_tnts[name] = true
 		local node_def = {
 			description = def.description,
 			tiles = {tnt_top, tnt_bottom, tnt_side},
@@ -814,7 +812,8 @@ if minetest.registered_nodes["tnt:tnt"] then
 end
 
 minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack, pointed_thing)
-	if tnt.registered_tnts[newnode.name] then
+	local groups = minetest.registered_nodes[newnode.name].groups
+	if groups.tnt or groups.volatile then
 		local meta = minetest.get_meta(pos)
 		local name = oldnode.name
 		local def = minetest.registered_items[name]

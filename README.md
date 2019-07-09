@@ -29,6 +29,16 @@ The number to multiply the TNT's entity knockback velocity on blast.
 tnt_revamped.entity_velocity_mul = 2
 ```
 
+The explosion api to use.
+
+Use the default tnt explosion api from the TNT mod.
+
+Use the explosion api from ryvnf's explosions mod.
+
+``` lua
+tnt_revamped.explosion = "default"
+```
+
 **In Water**
 
 If true TNT blast will be able to damage nodes even if its in water.

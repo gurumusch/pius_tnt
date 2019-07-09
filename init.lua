@@ -18,6 +18,7 @@ local tnt_radius = tonumber(minetest.settings:get("tnt_radius") or 3)
 local tnt_entity_velocity_mul = tonumber(minetest.settings:get("tnt_revamped.entity_velocity_mul") or 2)
 local tnt_damage_nodes = minetest.settings:get_bool("tnt_revamped.damage_nodes") or false
 local tnt_damage_entities = minetest.settings:get_bool("tnt_revamped.damage_entities") or false
+local tnt_explosion = minetest.settings:get("tnt_revamped.explosion") or "default"
 
 local flying_entitys = {}
 local water_nodes = {}
@@ -576,7 +577,7 @@ function tnt.register_tnt(def)
 			description = def.description,
 			tiles = {tnt_top, tnt_bottom, tnt_side},
 			is_ground_content = false,
-			groups = {dig_immediate = 2, mesecon = 2, tnt = 1, flammable = 5, explosive = def.radius},
+			groups = {dig_immediate = 2, mesecon = 2, tnt = 1, flammable = 5, explosive = def.radius, blast_resistance = 25},
 			after_place_node = function(pos, placer)
 				if placer:is_player() then
 					local meta = minetest.get_meta(pos)
@@ -595,7 +596,20 @@ function tnt.register_tnt(def)
 				end
 			end,
 			on_blast = function(pos, intensity, blaster)
-				tnt.create_entity(pos, name .. "_flying", nil, def.jump)
+				minetest.after(0.2, 
+					function(pos, name, def) 
+						if minetest.registered_entities[name .. "_flying"] then 
+							tnt.create_entity(pos, name .. "_flying", nil, def.jump) 
+						end 
+					end, pos, name, def)
+			end,
+			on_blast_break = function(pos)
+				minetest.after(0.2, 
+				function(pos, name, def) 
+					if minetest.registered_entities[name .. "_flying"] then 
+						tnt.create_entity(pos, name .. "_flying", nil, def.jump) 
+					end 
+				end, pos, name, def)
 			end,
 			mesecons = {effector =
 				{action_on =
@@ -806,9 +820,21 @@ if minetest.registered_nodes["tnt:tnt"] then
 		name = "tnt:tnt",
 		description = "TNT",
 		radius = tnt_radius,
+		strength = 1000,
 		time = 4,
 		jump = 3,
 	})
+end
+
+if tnt_explosion == "explosions" then
+	local old_boom = tnt.boom
+	tnt.boom = function(pos, def, owner, in_water)
+		if not in_water or tnt_damage_nodes then
+			explosions.explode(pos, def)
+		else
+			old_boom(pos, def, owner, in_water)
+		end
+	end
 end
 
 minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack, pointed_thing)

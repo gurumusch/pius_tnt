@@ -33,7 +33,7 @@ The explosion api to use.
 
 Use the default tnt explosion api from the TNT mod.
 
-Use the explosion api from ryvnf's explosions mod.
+Use the explosions api from ryvnf's explosions mod.
 
 ``` lua
 tnt_revamped.explosion = "default"

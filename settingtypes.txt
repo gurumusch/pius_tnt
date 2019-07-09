@@ -6,7 +6,7 @@ tnt_radius (Explosion radius) int 3
 tnt_revamped.entity_velocity_mul (TNT entity knockback velocity multiply) int 2
 # The explosion api to use.
 # Use the default tnt explosion api from the TNT mod.
-# Use the explosion api from ryvnf's explosions mod.
+# Use the explosions api from ryvnf's explosions mod.
 tnt_revamped.explosion (Explosion api) enum default explosions,default
 
 [In Water]

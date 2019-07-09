@@ -577,7 +577,7 @@ function tnt.register_tnt(def)
 			description = def.description,
 			tiles = {tnt_top, tnt_bottom, tnt_side},
 			is_ground_content = false,
-			groups = {dig_immediate = 2, mesecon = 2, tnt = 1, flammable = 5, explosive = def.radius, blast_resistance = 25},
+			groups = {dig_immediate = 2, mesecon = 2, tnt = 1, flammable = 5, explosive = def.radius, blast_resistance = 25, strength = def.strength},
 			after_place_node = function(pos, placer)
 				if placer:is_player() then
 					local meta = minetest.get_meta(pos)

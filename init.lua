@@ -297,18 +297,6 @@ local function add_effects(pos, radius, drops)
 	})
 end
 
-function tnt.burn(pos, nodename)
-	local name = nodename or minetest.get_node(pos).name
-	local def = minetest.registered_nodes[name]
-	if not def then
-		return
-	elseif def.on_ignite then
-		def.on_ignite(pos)
-	elseif minetest.get_item_group(name, "tnt") > 0 then
-		tnt.create_entity(pos, name .. "_flying", nil, def.jump)
-	end
-end
-
 local function tnt_explode(pos, radius, ignore_protection, ignore_on_blast, owner, explode_center, in_water)
 	
 	if in_water == nil then
@@ -415,11 +403,16 @@ function tnt.boom(pos, def, owner, in_water)
 	local def1 = def or {}
 	def1.radius = def.radius or 1
 	def1.damage_radius = def.damage_radius or def.radius * 2
-
 	if not owner then
 		owner = "<Unkown>"
 	end
-	
+	if def.boom_sound then
+		if not def.boom_sound.def then
+			def.boom_sound.def = {}
+		end
+		def.boom_sound.def.pos = pos
+		minetest.sound_play(def.boom_sound.name, def.boom_sound.def)
+	end
 	local drops, radius = tnt_explode(pos, def1.radius, def1.ignore_protection,
 			def1.ignore_on_blast, owner, def1.explode_center, in_water)
 	-- append entity drops
@@ -571,6 +564,15 @@ function tnt.register_tnt(def)
 	if not def.jump then def.jump = 3 end
 	
 	if enable_tnt then
+		local function ignite_sound_func()
+			if def.ignite_sound then
+				if not def.ignite_sound.def then
+					def.ignite_sound.def = {}
+				end
+				def.ignite_sound.def.pos = pos
+				minetest.sound_play(def.ignite_sound.name, def.ignite_sound.def)
+			end
+		end
 		local node_def = {
 			description = def.description,
 			tiles = {tnt_top, tnt_bottom, tnt_side},
@@ -590,6 +592,7 @@ function tnt.register_tnt(def)
 						minetest.chat_send_player(player_name, "This area is protected")
 						return
 					end
+					ignite_sound_func()
 					tnt.create_entity(pos, name .. "_flying", player_name, def.jump)
 				end
 			end,
@@ -597,6 +600,7 @@ function tnt.register_tnt(def)
 				minetest.after(0.2, 
 					function(pos, name, def) 
 						if minetest.registered_entities[name .. "_flying"] then 
+							ignite_sound_func()
 							tnt.create_entity(pos, name .. "_flying", nil, def.jump) 
 						end 
 					end, pos, name, def)
@@ -605,6 +609,7 @@ function tnt.register_tnt(def)
 				minetest.after(0.2, 
 				function(pos, name, def) 
 					if minetest.registered_entities[name .. "_flying"] then 
+						ignite_sound_func()
 						tnt.create_entity(pos, name .. "_flying", nil, def.jump) 
 					end 
 				end, pos, name, def)
@@ -612,14 +617,17 @@ function tnt.register_tnt(def)
 			mesecons = {effector =
 				{action_on =
 					function(pos)
+						ignite_sound_func()
 						tnt.create_entity(pos, name .. "_flying", nil, def.jump)
 					end
 				}
 			},
 			on_burn = function(pos)
+				ignite_sound_func()
 				tnt.create_entity(pos, name .. "_flying", nil, def.jump)
 			end,
 			on_ignite = function(pos, igniter)
+				ignite_sound_func()
 				tnt.create_entity(pos, name .. "_flying", nil, def.jump)
 			end,
 		}
@@ -821,9 +829,10 @@ if minetest.registered_nodes["tnt:tnt"] then
 		strength = 1000,
 		time = 4,
 		jump = 3,
+		ignite_sound = {name = "tnt_ignite"},
+		boom_sound = {name = "tnt_explode", def = {gain = 1.5, max_hear_distance = 128}}
 	})
 end
-
 if tnt_explosion == "explosions" then
 	local old_boom = tnt.boom
 	tnt.boom = function(pos, def, owner, in_water)
@@ -834,14 +843,12 @@ if tnt_explosion == "explosions" then
 		end
 	end
 end
-
 minetest.register_on_placenode(function(pos, newnode, placer, oldnode, itemstack, pointed_thing)
 	local groups = minetest.registered_nodes[newnode.name].groups
 	if groups.tnt or groups.volatile then
 		local meta = minetest.get_meta(pos)
 		local name = oldnode.name
 		local def = minetest.registered_items[name]
-		
 		if def.liquidtype == "flowing" then
 			meta:set_string("oldnode", name)
 			meta:set_string("old_param2", oldnode.param2)

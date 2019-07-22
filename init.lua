@@ -306,7 +306,6 @@ function tnt.burn(pos, nodename)
 		def.on_ignite(pos)
 	elseif minetest.get_item_group(name, "tnt") > 0 then
 		tnt.create_entity(pos, name .. "_flying", nil, def.jump)
-		minetest.sound_play("tnt_ignite", {pos = pos})
 	end
 end
 
@@ -421,7 +420,6 @@ function tnt.boom(pos, def, owner, in_water)
 		owner = "<Unkown>"
 	end
 	
-	minetest.sound_play("tnt_explode", {pos = pos, gain = 1.5, max_hear_distance = 2*64})
 	local drops, radius = tnt_explode(pos, def1.radius, def1.ignore_protection,
 			def1.ignore_on_blast, owner, def1.explode_center, in_water)
 	-- append entity drops

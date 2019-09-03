@@ -830,7 +830,7 @@ if minetest.registered_nodes["tnt:tnt"] then
 		time = 4,
 		jump = 3,
 		ignite_sound = {name = "tnt_ignite"},
-		boom_sound = {name = "tnt_explode", def = {gain = 1.5, max_hear_distance = 128}}
+		boom_sound = {name = "tnt_explode", def = {gain = 2.5, max_hear_distance = 128}}
 	})
 end
 if tnt_explosion == "explosions" then

@@ -1,6 +1,8 @@
 # tnt
 Fork of [TNT](https://github.com/minetest/minetest_game/tree/master/mods/tnt) mod
 
+This mod will also override the default TNT mod.
+
 water flow code copied from TenPlus1's builtin_item mod [builtin_item](https://notabug.org/TenPlus1/builtin_item)
 
 # Features 
@@ -34,7 +36,7 @@ tnt.register_tnt({
     -- Ignite sound effect.
     ignite_sound = {name = "tnt_ignite"},
     -- The explosion sound effect.
-    boom_sound = {name = "tnt_explode", def = {gain = 1.5, max_hear_distance = 128}}
+    boom_sound = {name = "tnt_explode", def = {gain = 2.5, max_hear_distance = 128}}
 })
 ```
 

@@ -9,10 +9,10 @@ if enable_tnt == nil then
 end
 
 -- loss probabilities array (one in X will be lost)
-local loss_prob = {}
+tnt.loss_prob = {}
 
-loss_prob["default:cobble"] = 3
-loss_prob["default:dirt"] = 4
+tnt.loss_prob["default:cobble"] = 3
+tnt.loss_prob["default:dirt"] = 4
 
 local tnt_radius = tonumber(minetest.settings:get("tnt_radius") or 3)
 local tnt_entity_velocity_mul = tonumber(minetest.settings:get("tnt_revamped.entity_velocity_mul") or 2)
@@ -106,7 +106,7 @@ end
 local function add_drop(drops, item)
 	item = ItemStack(item)
 	local name = item:get_name()
-	if loss_prob[name] ~= nil and math.random(1, loss_prob[name]) == 1 then
+	if tnt.loss_prob[name] ~= nil and math.random(1, tnt.loss_prob[name]) == 1 then
 		return
 	end
 

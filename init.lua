@@ -207,7 +207,7 @@ local function entity_physics(pos, radius, drops, in_water)
 
 			if do_knockback then
 				local obj_vel = obj:get_velocity()
-				obj:set_velocity(calc_velocity(pos, obj_pos,
+				obj:add_velocity(calc_velocity(pos, obj_pos,
 						obj_vel, radius * 10))
 			end
 			if do_damage and (not in_water or (in_water and tnt_damage_entities)) then
@@ -223,7 +223,7 @@ local function entity_physics(pos, radius, drops, in_water)
 			end
 		else
 			local obj_vel = obj:get_velocity()
-				obj:set_velocity(calc_velocity(pos, obj_pos,
+				obj:add_velocity(calc_velocity(pos, obj_pos,
 						obj_vel, radius * tnt_entity_velocity_mul))
 		end
 	end

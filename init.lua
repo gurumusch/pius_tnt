@@ -182,14 +182,9 @@ local function entity_physics(pos, radius, drops, in_water)
 
 		local damage = (4 / dist) * radius
 		if obj:is_player() then
-			-- currently the engine has no method to set
-			-- player velocity. See #2960
-			-- instead, we knock the player back 1.0 node, and slightly upwards
-			local dir = vector.normalize(vector.subtract(obj_pos, pos))
-			local moveoff = vector.multiply(dir, dist + 1.0)
-			local newpos = vector.add(pos, moveoff)
-			newpos = vector.add(newpos, {x = 0, y = 0.2, z = 0})
-			obj:set_pos(newpos)
+			local obj_vel = obj:get_player_velocity()
+			obj:add_player_velocity(calc_velocity(pos, obj_pos,
+					obj_vel, radius * 10))
 
 			if not in_water or (in_water and tnt_damage_entities) then
 				obj:set_hp(obj:get_hp() - damage)

@@ -51,7 +51,19 @@ tnt_radius = 3
 The number to multiply the TNT's entity knockback velocity on blast.
 
 ``` lua
-tnt_revamped.entity_velocity_mul = 2
+tnt_revamped.tnt_entity_velocity_mul = 2
+```
+
+The number to multiply how much knock back on a player.
+
+``` lua
+tnt_revamped.player_velocity_mul = 10
+```
+
+The number to multiply how much knock back on a entity.
+
+``` lua
+tnt_revamped.entity_velocity_mul = 10
 ```
 
 The explosion api to use.

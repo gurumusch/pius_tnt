@@ -15,7 +15,9 @@ tnt.loss_prob["default:cobble"] = 3
 tnt.loss_prob["default:dirt"] = 4
 
 local tnt_radius = tonumber(minetest.settings:get("tnt_radius") or 3)
-local tnt_entity_velocity_mul = tonumber(minetest.settings:get("tnt_revamped.entity_velocity_mul") or 2)
+local tnt_entity_velocity_mul = tonumber(minetest.settings:get("tnt_revamped.tnt_entity_velocity_mul") or 2)
+local player_velocity_mul = tonumber(minetest.settings:get("tnt_revamped.player_velocity_mul") or 10)
+local entity_velocity_mul = tonumber(minetest.settings:get("tnt_revamped.entity_velocity_mul") or 10)
 local tnt_damage_nodes = minetest.settings:get_bool("tnt_revamped.damage_nodes") or false
 local tnt_damage_entities = minetest.settings:get_bool("tnt_revamped.damage_entities") or false
 local tnt_explosion = minetest.settings:get("tnt_revamped.explosion") or "default"
@@ -184,10 +186,14 @@ local function entity_physics(pos, radius, drops, in_water)
 		if obj:is_player() then
 			local obj_vel = obj:get_player_velocity()
 			obj:add_player_velocity(calc_velocity(pos, obj_pos,
-					obj_vel, radius * 10))
+					obj_vel, radius * player_velocity_mul))
 
 			if not in_water or (in_water and tnt_damage_entities) then
-				obj:set_hp(obj:get_hp() - damage)
+				local hp = obj:get_hp() - damage
+				if hp < 0 then
+					hp = 0
+				end
+				obj:set_hp(hp)
 			end
 		elseif not flying_entitys[obj:get_entity_name()] then
 			local do_damage = true
@@ -203,7 +209,7 @@ local function entity_physics(pos, radius, drops, in_water)
 			if do_knockback then
 				local obj_vel = obj:get_velocity()
 				obj:add_velocity(calc_velocity(pos, obj_pos,
-						obj_vel, radius * 10))
+						obj_vel, radius * entity_velocity_mul))
 			end
 			if do_damage and (not in_water or (in_water and tnt_damage_entities)) then
 				if not obj:get_armor_groups().immortal then

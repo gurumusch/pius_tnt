@@ -164,9 +164,6 @@ local function calc_velocity(pos1, pos2, old_vel, power)
 	dist = math.max(dist, 1)
 	vel = vector.divide(vel, dist)
 
-	-- Add old velocity
-	vel = vector.add(vel, old_vel)
-
 	-- Limit to terminal velocity
 	dist = vector.length(vel)
 	if dist > 250 then
@@ -222,9 +219,9 @@ local function entity_physics(pos, radius, drops, in_water)
 				add_drop(drops, item)
 			end
 		else
+			obj:get_luaentity().timer = 0
 			local obj_vel = obj:get_velocity()
-				obj:add_velocity(calc_velocity(pos, obj_pos,
-						obj_vel, radius * tnt_entity_velocity_mul))
+			obj:add_velocity(calc_velocity(pos, obj_pos, obj_vel, radius * tnt_entity_velocity_mul))
 		end
 	end
 end

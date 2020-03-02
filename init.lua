@@ -22,7 +22,6 @@ local tnt_damage_nodes = minetest.settings:get_bool("tnt_revamped.damage_nodes")
 local tnt_damage_entities = minetest.settings:get_bool("tnt_revamped.damage_entities") or false
 local tnt_explosion = minetest.settings:get("tnt_revamped.explosion") or "default"
 
-local flying_entitys = {}
 local water_nodes = {}
 
 minetest.register_on_mods_loaded(function() 
@@ -195,7 +194,7 @@ local function entity_physics(pos, radius, drops, in_water)
 				end
 				obj:set_hp(hp)
 			end
-		elseif not flying_entitys[obj:get_entity_name()] then
+		elseif obj:get_entity_name() ~= "tnt_revamped:empty_tnt_entity" then
 			local do_damage = true
 			local do_knockback = true
 			local entity_drops = {}
@@ -420,18 +419,10 @@ function tnt.boom(pos, def, owner, in_water)
 		" with radius " .. radius)
 end
 
-function tnt.create_entity(pos, name, owner, jump, def)
-	local obj
-	local ent
-
-	if name then
-		obj = minetest.add_entity(pos, name)
-		ent = obj:get_luaentity()
-	else
-		obj = minetest.add_entity(pos, "tnt_revamped:empty_tnt_entity")
-		ent = obj:get_luaentity()
-		ent.def = def
-	end
+function tnt.create_entity(pos, owner, jump, def)
+	local obj = minetest.add_entity(pos, "tnt_revamped:empty_tnt_entity")
+	local ent = obj:get_luaentity()
+	ent.def = def
 
 	local old_meta = minetest.get_meta(pos)
 	
@@ -552,7 +543,7 @@ function tnt.register_tnt(def)
 	local tnt_top = def.tiles.top or def.name .. "_top.png"
 	local tnt_bottom = def.tiles.bottom or def.name .. "_bottom.png"
 	local tnt_side = def.tiles.side or def.name .. "_side.png"
-	local tnt_burning = def.tiles.burning or def.name .. "_top_burning_animated.png"
+	local tnt_burning = def.tiles.burning or def.name .. "_top_burning.png"
 	if not def.damage_radius then def.damage_radius = def.radius * 2 end
 	if not def.time then def.time = 4 end
 	if not def.jump then def.jump = 3 end
@@ -567,6 +558,22 @@ function tnt.register_tnt(def)
 				minetest.sound_play(def.ignite_sound.name, def.ignite_sound.def)
 			end
 		end
+		local tiles = {tnt_burning,
+				tnt_bottom, tnt_side, tnt_side, tnt_side, tnt_side
+		}
+
+		local function convert_to_entity(pos, def, tiles)
+			local meta = minetest.get_meta(pos)
+			local name = meta:get_string("owner") or nil
+			ignite_sound_func()
+			local obj = tnt.create_entity(pos, name, def.jump, def)
+			obj:set_properties({textures = tiles, visual = "cube", visual_size = {x = 1, y = 1, z = 1}})
+			local ent = obj:get_luaentity()
+			if ent then
+				ent.time = def.time
+			end
+		end
+		
 		local node_def = {
 			description = def.description,
 			tiles = {tnt_top, tnt_bottom, tnt_side},
@@ -586,43 +593,27 @@ function tnt.register_tnt(def)
 						minetest.chat_send_player(player_name, "This area is protected")
 						return
 					end
-					ignite_sound_func()
-					tnt.create_entity(pos, name .. "_flying", player_name, def.jump)
+					convert_to_entity(pos, def, tiles)
 				end
 			end,
 			on_blast = function(pos, intensity, blaster)
-				minetest.after(0.2, 
-					function(pos, name, def) 
-						if minetest.registered_entities[name .. "_flying"] then 
-							ignite_sound_func()
-							tnt.create_entity(pos, name .. "_flying", nil, def.jump) 
-						end 
-					end, pos, name, def)
+				convert_to_entity(pos, def, tiles)
 			end,
 			on_blast_break = function(pos)
-				minetest.after(0.2, 
-				function(pos, name, def) 
-					if minetest.registered_entities[name .. "_flying"] then 
-						ignite_sound_func()
-						tnt.create_entity(pos, name .. "_flying", nil, def.jump) 
-					end 
-				end, pos, name, def)
+				convert_to_entity(pos, def, tiles)
 			end,
 			mesecons = {effector =
 				{action_on =
 					function(pos)
-						ignite_sound_func()
-						tnt.create_entity(pos, name .. "_flying", nil, def.jump)
+						convert_to_entity(pos, def, tiles)
 					end
 				}
 			},
 			on_burn = function(pos)
-				ignite_sound_func()
-				tnt.create_entity(pos, name .. "_flying", nil, def.jump)
+				convert_to_entity(pos, def, tiles)
 			end,
 			on_ignite = function(pos, igniter)
-				ignite_sound_func()
-				tnt.create_entity(pos, name .. "_flying", nil, def.jump)
+				convert_to_entity(pos, def, tiles)
 			end,
 		}
 		if not minetest.registered_nodes[name] then
@@ -631,108 +622,6 @@ function tnt.register_tnt(def)
 			minetest.override_item(name, node_def)
 		end
 	end
-
-	local burning_node_def = {
-		tiles = {
-			{
-				name = tnt_burning,
-				animation = {
-					type = "vertical_frames",
-					aspect_w = 16,
-					aspect_h = 16,
-					length = 1,
-				}
-			},
-			tnt_bottom, tnt_side
-		},
-	}
-
-	if not minetest.registered_nodes[name .. "_burning"] then
-		minetest.register_node(":" .. name .. "_burning", burning_node_def)
-	else
-		minetest.override_item(name .. "_burning", burning_node_def)
-	end
-	
-	flying_entitys[name .. "_flying"] = true
-
-	minetest.register_entity(":" .. name .. "_flying", {
-		name = name .. "_flying",
-		textures = {
-			name .. "_burning"
-		},
-		initial_properties = {
-			timer = 0,
-			time = def.time,
-			drops = {}
-		},
-		timer = 0,
-		time = def.time,
-		drops = {},
-		visual = "wielditem",
-		visual_size = {x = 0.667, y = 0.667},
-		physical = true,
-		collide_with_objects = false,
-		static_save = false,
-		on_step = function(self, dtime)
-			self.time = self.time - dtime
-
-			local pos = self.object:get_pos()
-
-			local v = self.object:get_velocity()
-
-			-- water flowing
-			if self.flow then
-				local node = minetest.get_node_or_nil(pos)
-				local def_ = node and minetest.registered_nodes[node.name]
-				
-				if def_ and def_.liquidtype == "flowing" then
-					local vec = quick_flow(pos, node)
-					self.object:set_velocity({x = vec.x, y = v.y, z = vec.z})
-				else
-					self.timer = self.timer + dtime
-				end
-			else
-				self.timer = self.timer + dtime
-			end
-
-			if self.timer >= 0.2 then
-				if minetest.registered_nodes[minetest.env:get_node({x = pos.x, y = pos.y - 0.667, z = pos.z}).name].walkable then
-					self.object:set_velocity({x = 0, y = 0, z = 0})
-				end
-
-				self.timer = 0
-			end
-			
-			if self.time <= 0 then
-				if water_nodes[minetest.get_node(pos).name] then
-					tnt.boom(pos, def, self.owner, true)
-				else
-					tnt.boom(pos, def, self.owner, false)
-				end
-				if self.drops then
-					eject_drops2(self.drops, pos, def.radius)
-				end
-				self.object:remove()
-			end
-		end,
-		on_blast = function(pos, intensity, blaster)
-			return
-		end,
-		get_staticdata = function(self)
-			return minetest.serialize({timer = self.timer, time = self.time, flow = self.flow, owner = self.owner, drops = self.drops})
-		end,
-		on_activate = function(self, staticdata)
-			self.object:set_armor_groups({immortal = 1})
-			local ds = core.deserialize(staticdata)
-			if ds then
-				self.timer = ds.timer
-				self.time = ds.time
-				self.owner = ds.owner
-				self.flow = ds.flow
-				self.drops = ds.drops
-			end
-		end,
-	})
 end
 
 minetest.register_entity("tnt_revamped:empty_tnt_entity", {
@@ -812,8 +701,6 @@ minetest.register_entity("tnt_revamped:empty_tnt_entity", {
 		end
 	end,
 })
-
-flying_entitys["tnt_revamped:empty_tnt_entity"] = true
 
 if minetest.registered_nodes["tnt:tnt"] then
 	tnt.register_tnt({

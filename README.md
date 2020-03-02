@@ -1,4 +1,4 @@
-# tnt
+# TNT
 Fork of [TNT](https://github.com/minetest/minetest_game/tree/master/mods/tnt) mod
 
 This mod will also override the default TNT mod.
@@ -9,13 +9,15 @@ water flow code copied from TenPlus1's builtin_item mod [builtin_item](https://n
 
 1. TNT is always entity on ignite.
 
-2. TNT entitys flow in water.
+2. Ignited TNT entities flow in water.
 
 3. TNT jumps on ignite.
 
 4. It is possible to make minecraft style TNT cannons with this mod.
 
-5. TNT does not damage nodes if in water.
+5. TNT does not damage nodes if it blows up in water. (This can be changed in config)
+
+6. TNT does not damage players or entities if it blows up in water. (This can be changed in config)
 
 # api
 
@@ -48,7 +50,7 @@ The size of the default tnt blast.
 tnt_radius = 3
 ```
 
-The number to multiply the TNT's entity knockback velocity on blast.
+The number to multiply how much knock back on another TNT entity.
 
 ``` lua
 tnt_revamped.tnt_entity_velocity_mul = 2
@@ -68,9 +70,9 @@ tnt_revamped.entity_velocity_mul = 10
 
 The explosion api to use.
 
-Use the default tnt explosion api from the TNT mod.
+Use default for the built-in explosions.
 
-Use the explosions api from ryvnf's explosions mod.
+Use explosions for ryvnf's explosions mod.
 
 ``` lua
 tnt_revamped.explosion = "default"
@@ -89,13 +91,3 @@ If true TNT blast will be able to damage entities even if its in water.
 ``` lua
 tnt_revamped.damage_entities = false
 ```
-
-Authors of source code
-----------------------
-PilzAdam (MIT)
-
-ShadowNinja (MIT)
-
-sofar (sofar@foo-projects.org) (MIT)
-
-Various Minetest developers and contributors (MIT)

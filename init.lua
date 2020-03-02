@@ -627,16 +627,15 @@ end
 minetest.register_entity("tnt_revamped:empty_tnt_entity", {
 	name = "empty_tnt_entity",
 	initial_properties = {
-		timer = 0,
+		timer = -1,
 		time = 0,
 		drops = {}
 	},
-	timer = 0,
+	timer = -1,
 	time = 0,
 	def = {},
 	drops = {},
-	visual = "wielditem",
-	visual_size = {x = 0.667, y = 0.667},
+	selectionbox = {-0.5, -0.5, -0.5, 0.5, 0.5, 0.5},
 	physical = true,
 	collide_with_objects = false,
 	static_save = false,

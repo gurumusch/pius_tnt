@@ -627,11 +627,11 @@ end
 minetest.register_entity("tnt_revamped:empty_tnt_entity", {
 	name = "empty_tnt_entity",
 	initial_properties = {
-		timer = -1,
+		timer = 0,
 		time = 0,
 		drops = {}
 	},
-	timer = -1,
+	timer = 0,
 	time = 0,
 	def = {},
 	drops = {},
@@ -641,13 +641,12 @@ minetest.register_entity("tnt_revamped:empty_tnt_entity", {
 	static_save = false,
 	on_step = function(self, dtime)
 		self.time = self.time - dtime
-
 		local pos = self.object:get_pos()
-
 		local v = self.object:get_velocity()
+		local flow = self.flow
 
 		-- water flowing
-		if self.flow then
+		if flow then
 			local node = minetest.get_node_or_nil(pos)
 			local def_ = node and minetest.registered_nodes[node.name]
 			
@@ -662,8 +661,13 @@ minetest.register_entity("tnt_revamped:empty_tnt_entity", {
 		end
 
 		if self.timer >= 0.2 then
-			if minetest.registered_nodes[minetest.env:get_node({x = pos.x, y = pos.y - 0.667, z = pos.z}).name].walkable then
+			local node = minetest.env:get_node({x = pos.x, y = pos.y - 0.667, z = pos.z})
+			local node_name = node.name
+			local r_node = minetest.registered_nodes[node_name]
+			if r_node.walkable then
 				self.object:set_velocity({x = 0, y = 0, z = 0})
+			elseif not flow and r_node.liquidtype then
+				self.flow = true
 			end
 
 			self.timer = 0

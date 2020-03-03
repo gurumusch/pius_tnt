@@ -394,7 +394,7 @@ function tnt.boom(pos, def, owner, in_water)
 	def1.radius = def.radius or 1
 	def1.damage_radius = def.damage_radius or def.radius * 2
 	if not owner then
-		owner = "<Unkown>"
+		owner = "<Unknown>"
 	end
 	if def.boom_sound then
 		if not def.boom_sound.def then

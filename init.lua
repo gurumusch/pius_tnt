@@ -311,9 +311,9 @@ local function tnt_explode(pos, radius, ignore_protection, ignore_on_blast, owne
 		local pr = PseudoRandom(os.time())
 		p1 = vector.subtract(pos, radius)
 		p2 = vector.add(pos, radius)
-		minp, maxp = vm:read_from_map(p1, p2)
-		a = VoxelArea:new({MinEdge = minp, MaxEdge = maxp})
-		data = vm:get_data()
+		local minp, maxp = vm:read_from_map(p1, p2)
+		local a = VoxelArea:new({MinEdge = minp, MaxEdge = maxp})
+		local data = vm:get_data()
 
 		local drops = {}
 		local on_blast_queue = {}
@@ -546,7 +546,7 @@ function tnt.register_tnt(def)
 	if not def.jump then def.jump = 3 end
 	
 	if enable_tnt then
-		local function ignite_sound_func()
+		local function ignite_sound_func(pos)
 			if def.ignite_sound then
 				if not def.ignite_sound.def then
 					def.ignite_sound.def = {}
@@ -562,7 +562,7 @@ function tnt.register_tnt(def)
 		local function convert_to_entity(pos, def, tiles)
 			local meta = minetest.get_meta(pos)
 			local name = meta:get_string("owner") or nil
-			ignite_sound_func()
+			ignite_sound_func(pos)
 			local obj = tnt.create_entity(pos, name, def.jump, def)
 			obj:set_properties({textures = tiles, visual = "cube", visual_size = {x = 1, y = 1, z = 1}})
 			local ent = obj:get_luaentity()
@@ -623,11 +623,6 @@ end
 
 minetest.register_entity("tnt_revamped:empty_tnt_entity", {
 	name = "empty_tnt_entity",
-	initial_properties = {
-		timer = 0,
-		time = 0,
-		drops = {}
-	},
 	timer = 0,
 	time = 0,
 	def = {},
@@ -636,6 +631,7 @@ minetest.register_entity("tnt_revamped:empty_tnt_entity", {
 	physical = true,
 	collide_with_objects = false,
 	static_save = false,
+	owner = "",
 	on_step = function(self, dtime)
 		self.time = self.time - dtime
 		local pos = self.object:get_pos()

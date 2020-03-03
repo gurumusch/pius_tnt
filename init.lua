@@ -426,6 +426,7 @@ function tnt.create_entity(pos, owner, jump, def)
 	if not owner then
 		owner = old_meta:get_string("owner")
 	end
+	ent.owner = owner
 
 	obj:set_acceleration({x = 0, y = -10, z = 0})
 

@@ -124,6 +124,10 @@ local function destroy(drops, npos, cid, c_air, c_fire,
 		on_blast_queue, on_construct_queue,
 		ignore_protection, ignore_on_blast, owner)
 
+	if not ignore_protection and minetest.is_protected(npos, owner) then
+		return cid
+	end
+
 	local def = cid_data[cid]
 
 	if not def then
@@ -236,7 +240,7 @@ local function add_effects(pos, radius, drops)
 		collisiondetection = false,
 		vertical = false,
 		texture = "tnt_boom.png",
-		glow = 15,
+		glow = 15
 	})
 	minetest.add_particlespawner({
 		amount = 64,
@@ -251,7 +255,7 @@ local function add_effects(pos, radius, drops)
 		maxexptime = 2.5,
 		minsize = radius * 3,
 		maxsize = radius * 5,
-		texture = "tnt_smoke.png",
+		texture = "tnt_smoke.png"
 	})
 
 	-- we just dropped some items. Look at the items entities and pick

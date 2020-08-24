@@ -12,17 +12,6 @@ local inv_roots = {
 	[8] = 0.35355339059327
 }
 
-local function node_ok(pos)
-
-	local node = get_node_or_nil(pos)
-
-	if node and registered_nodes[node.name] then
-		return node
-	end
-
-	return nil
-end
-
 function tnt.to_unit_vector(dir_vector)
 	local x = dir_vector.x
 	local z = dir_vector.z
@@ -36,7 +25,7 @@ function tnt.to_unit_vector(dir_vector)
 end
 
 function tnt.quick_flow_logic(node, pos_testing, direction)
-	local node_testing = node_ok(pos_testing)
+	local node_testing = get_node_or_nil(pos_testing)
 
 	if node_testing and registered_nodes[node_testing.name].liquidtype == "none" then
 		return 0

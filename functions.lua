@@ -4,12 +4,6 @@ if enable_tnt == nil then
 	enable_tnt = minetest.is_singleplayer()
 end
 
--- loss probabilities array (one in X will be lost)
-tnt.loss_prob = {}
-
-tnt.loss_prob["default:cobble"] = 3
-tnt.loss_prob["default:dirt"] = 4
-
 local tnt_entity_velocity_mul = tonumber(minetest.settings:get("tnt_revamped.tnt_entity_velocity_mul")) or 2
 local player_velocity_mul = tonumber(minetest.settings:get("tnt_revamped.player_velocity_mul")) or 10
 local entity_velocity_mul = tonumber(minetest.settings:get("tnt_revamped.entity_velocity_mul")) or 10
@@ -60,7 +54,7 @@ minetest.register_on_mods_loaded(function()
 			name = name,
 			drops = def.drops,
 			flammable = def.groups.flammable,
-			on_blast = def.on_blast,
+			on_blast = def.on_blast
 		}
 	end
 end)
@@ -108,7 +102,8 @@ end
 local function add_drop(drops, item)
 	item = ItemStack(item)
 	local name = item:get_name()
-	if tnt.loss_prob[name] ~= nil and random(1, tnt.loss_prob[name]) == 1 then
+	local groups = item:get_definition().groups
+	if groups.loss_probability and random(1, groups.loss_probability) == 1 then
 		return
 	end
 
@@ -212,6 +207,7 @@ local function entity_physics(pos, radius, drops, in_water)
 				obj:add_velocity(calc_velocity(pos, obj_pos,
 						obj_vel, radius * entity_velocity_mul))
 			end
+
 			if do_damage and (not in_water or (in_water and tnt_damage_entities)) then
 				if not obj:get_armor_groups().immortal then
 					obj:punch(obj, 1.0, {
@@ -220,11 +216,12 @@ local function entity_physics(pos, radius, drops, in_water)
 					}, nil)
 				end
 			end
+
 			for _, item in pairs(entity_drops) do
 				add_drop(drops, item)
 			end
 		else
-			obj:get_luaentity().timer = 0
+			obj:get_luaentity().flow_check_step = 0
 			local obj_vel = obj:get_velocity()
 			obj:add_velocity(calc_velocity(pos, obj_pos, obj_vel, radius * tnt_entity_velocity_mul))
 		end
@@ -360,35 +357,40 @@ function tnt.boom(pos, def, owner, in_water)
 		" with radius " .. radius)
 end
 
-function tnt.create_entity(pos, owner, jump, def)
+function tnt.create_entity(pos, def, owner)
 	local obj = add_entity(pos, "tnt_revamped:empty_tnt_entity")
 	local ent = obj:get_luaentity()
-	ent.def = def
 
-	local old_meta = get_meta(pos)
-	
-	if not owner then
-		owner = old_meta:get_string("owner")
-	end
-	
-	ent.owner = owner
+	if ent then
+		local old_meta = get_meta(pos)
+		
+		if not owner then
+			owner = old_meta:get_string("owner")
+		end
+		
+		ent.owner = owner
 
-	obj:set_acceleration({x = 0, y = -10, z = 0})
+		obj:set_acceleration({x = 0, y = -10, z = 0})
 
-	if jump then
-		obj:set_velocity({x = 0, y = jump, z = 0})
-	end
-	
-	local oldnode = old_meta:get_string("oldnode")
-	local old_param2 = old_meta:get_string("old_param2")
+		if def.jump then
+			obj:set_velocity({x = 0, y = def.jump, z = 0})
+		end
+		
+		local oldnode = old_meta:get_string("oldnode")
+		local old_param2 = old_meta:get_string("old_param2")
 
-	if oldnode ~= "" and old_param2 ~= "" then
-		set_node(pos, {name = oldnode, param2 = tonumber(old_param2)})
-		ent.flow = true
-	elseif oldnode ~= "" then
-		set_node(pos, {name = oldnode})
-	else
-		remove_node(pos)
+		if oldnode ~= "" and old_param2 ~= "" then
+			set_node(pos, {name = oldnode, param2 = tonumber(old_param2)})
+			ent.flow = true
+		elseif oldnode ~= "" then
+			set_node(pos, {name = oldnode})
+		else
+			remove_node(pos)
+		end
+
+		obj:set_properties({textures = def.entity_tiles, visual = "cube", visual_size = def.visual_size})
+
+		ent:setup(def)
 	end
 
 	return obj
@@ -412,6 +414,7 @@ function tnt.register_tnt(def)
 	if not def.damage_radius then def.damage_radius = def.radius * 2 end
 	if not def.time then def.time = 4 end
 	if not def.jump then def.jump = 3 end
+	if not def.visual_size then def.visual_size = {x = 1, y = 1, z = 1} end
 	
 	if enable_tnt then
 		local function ignite_sound_func(pos)
@@ -423,20 +426,19 @@ function tnt.register_tnt(def)
 				sound_play(def.ignite_sound.name, def.ignite_sound.def)
 			end
 		end
+
 		local tiles = {tnt_burning,
 				tnt_bottom, tnt_side, tnt_side, tnt_side, tnt_side
 		}
 
-		local function convert_to_entity(pos, def, tiles)
+		if not def.entity_tiles then def.entity_tiles = tiles end
+
+		local function convert_to_entity(pos, def)
 			local meta = get_meta(pos)
 			local name = meta:get_string("owner") or nil
+			create_entity(pos, def, name)
+
 			ignite_sound_func(pos)
-			local obj = create_entity(pos, name, def.jump, def)
-			obj:set_properties({textures = tiles, visual = "cube", visual_size = {x = 1, y = 1, z = 1}})
-			local ent = obj:get_luaentity()
-			if ent then
-				ent.time = def.time
-			end
 		end
 		
 		local node_def = {
@@ -458,27 +460,27 @@ function tnt.register_tnt(def)
 						chat_send_player(player_name, "This area is protected")
 						return
 					end
-					convert_to_entity(pos, def, tiles)
+					convert_to_entity(pos, def)
 				end
 			end,
 			on_blast = function(pos, intensity, blaster)
-				convert_to_entity(pos, def, tiles)
+				convert_to_entity(pos, def)
 			end,
 			on_blast_break = function(pos)
-				convert_to_entity(pos, def, tiles)
+				convert_to_entity(pos, def)
 			end,
 			mesecons = {effector =
 				{action_on =
 					function(pos)
-						convert_to_entity(pos, def, tiles)
+						convert_to_entity(pos, def)
 					end
 				}
 			},
 			on_burn = function(pos)
-				convert_to_entity(pos, def, tiles)
+				convert_to_entity(pos, def)
 			end,
 			on_ignite = function(pos, igniter)
-				convert_to_entity(pos, def, tiles)
+				convert_to_entity(pos, def)
 			end,
 		}
 

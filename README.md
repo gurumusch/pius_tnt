@@ -13,11 +13,17 @@ water flow code copied from TenPlus1's builtin_item mod [builtin_item](https://n
 
 3. TNT jumps on ignite.
 
+4. TNT blinks on ignite.
+
 4. It is possible to make minecraft style TNT cannons with this mod.
 
 5. TNT does not damage nodes if it blows up in water. (This can be changed in config)
 
 6. TNT does not damage players or entities if it blows up in water. (This can be changed in config)
+
+7. TNT expands just before blowing up.
+
+8. Players and other entities get knocked back by the explosion.
 
 # api
 
@@ -80,13 +86,13 @@ tnt_revamped.explosion = "default"
 
 **In Water**
 
-If true TNT blast will be able to damage nodes even if its in water.
+If true TNT blast will be able to damage nodes even if it is in water.
 
 ``` lua
 tnt_revamped.damage_nodes = false
 ```
 
-If true TNT blast will be able to damage entities even if its in water.
+If true TNT blast will be able to damage entities even if it is in water.
 
 ``` lua
 tnt_revamped.damage_entities = false

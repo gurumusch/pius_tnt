@@ -3,7 +3,6 @@ local get_node_or_nil = minetest.get_node_or_nil
 local get_node = minetest.get_node
 local serialize = minetest.serialize
 local deserialize = minetest.deserialize
-local add_item = minetest.add_item
 local boom = tnt.boom
 local quick_flow = tnt.quick_flow
 local new = vector.new
@@ -15,6 +14,9 @@ minetest.register_on_mods_loaded(function()
 			water_nodes[name] = true
 		end
 	end
+
+	-- To get any overrides.
+	boom = tnt.boom
 end)
 
 minetest.register_entity("tnt_revamped:empty_tnt_entity", {
@@ -26,10 +28,11 @@ minetest.register_entity("tnt_revamped:empty_tnt_entity", {
 	blink_timer = 0.4,
 	owner = "",
 	blink = false,
+	blink_texture = "^[colorize:white:255",
 	expand_time = 0.15,
 	expand_rate = {x = 0.1, y = 0.1, z = 0.1},
 	def = {},
-	drops = {},
+	custom_data = {},
 	visual_size = {x = 1, y = 1, z = 1},
 	selectionbox = {-0.5, -0.5, -0.5, 0.5, 0.5, 0.5},
 	physical = true,
@@ -71,7 +74,7 @@ minetest.register_entity("tnt_revamped:empty_tnt_entity", {
 		end
 
 		if self.blink_step > self.blink_timer then
-			object:set_texture_mod(self.blink and "^[colorize:white:255" or "")
+			object:set_texture_mod(self.blink and self.blink_texture or "")
 
 			self.blink = not self.blink
 			self.blink_step = 0
@@ -94,28 +97,19 @@ minetest.register_entity("tnt_revamped:empty_tnt_entity", {
 		end
 
 		if time <= 0 then
+			local def = self.def
+			local on_explode = def.on_explode
+			
 			if water_nodes[get_node(pos).name] then
-				boom(pos, self.def, self.owner, true)
+				boom(pos, def, self.owner, true)
 			else
-				boom(pos, self.def, self.owner, false)
+				boom(pos, def, self.owner, false)
 			end
-			if self.drops then
-				local drops = self.drops
-				local drop_pos = new(pos)
-				for _, item in pairs(drops) do
-					local count = item.count or 1
-					local dropitem = ItemStack(item.name)
-					dropitem:set_count(count)
-					local obj = add_item(drop_pos, dropitem)
-					if obj then
-						obj:get_luaentity().collect = true
-						obj:set_acceleration({x = 0, y = -10, z = 0})
-						obj:set_velocity({x = random(-3, 3),
-								y = random(0, 10),
-								z = random(-3, 3)})
-					end
-				end
+
+			if on_explode then
+				on_explode(self)
 			end
+
 			object:remove()
 		else
 			self.time = self.time - dtime
@@ -133,9 +127,9 @@ minetest.register_entity("tnt_revamped:empty_tnt_entity", {
 			flow = self.flow,
 			owner = self.owner,
 			def = self.def,
-			drops = self.drops,
 			blink_step = self.blink_step,
 			blink_timer = self.blink_timer,
+			blink_texture = self.blink_texture,
 			flow_check = self.flow_check,
 			expand_time = self.expand_time,
 			expand_rate = self.expand_rate
@@ -153,12 +147,13 @@ minetest.register_entity("tnt_revamped:empty_tnt_entity", {
 			self.owner = ds.owner
 			self.flow = ds.flow
 			self.def = ds.def
-			self.drops = ds.drops
 			self.blink_step = ds.blink_step
 			self.blink_timer = ds.blink_timer
 			self.flow_check = ds.flow_check
 			self.expand_time = ds.expand_time
 			self.expand_rate = ds.expand_rate
+			self.custom_data = ds.custom_data
+			self.blink_texture = ds.blink_texture
 		end
 	end,
 
@@ -172,6 +167,8 @@ minetest.register_entity("tnt_revamped:empty_tnt_entity", {
 		self.flow_check = def.flow_check or self.flow_check
 		self.expand_time = def.expand_time or self.expand_time
 		self.expand_rate = def.expand_rate or self.expand_rate
+		self.custom_data = def.custom_data or self.custom_data
+		self.blink_texture = def.blink_texture or self.blink_texture
 		self.visual_size = self.object:get_properties().visual_size
 	end
 })

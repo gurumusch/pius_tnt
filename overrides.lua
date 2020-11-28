@@ -9,6 +9,9 @@ if minetest.registered_nodes["tnt:tnt"] then
 		ignite_sound = {name = "tnt_ignite"},
 		boom_sound = {name = "tnt_explode", def = {gain = 2.5, max_hear_distance = 128}}
 	})
+
+	-- Remove tnt:tnt_burning because if placed it will keep exploding.
+	minetest.unregister_item("tnt:tnt_burning")
 end
 
 local tnt_damage_nodes = minetest.settings:get_bool("tnt_revamped.damage_nodes") or false

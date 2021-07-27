@@ -4,11 +4,12 @@ if enable_tnt == nil then
 	enable_tnt = minetest.is_singleplayer()
 end
 
-local tnt_entity_velocity_mul = tonumber(minetest.settings:get("tnt_revamped.tnt_entity_velocity_mul")) or 2
-local player_velocity_mul = tonumber(minetest.settings:get("tnt_revamped.player_velocity_mul")) or 10
-local entity_velocity_mul = tonumber(minetest.settings:get("tnt_revamped.entity_velocity_mul")) or 10
-local tnt_damage_nodes = minetest.settings:get_bool("tnt_revamped.damage_nodes") or false
-local tnt_damage_entities = minetest.settings:get_bool("tnt_revamped.damage_entities") or false
+local tnt_entity_velocity_mul = tonumber(minetest.settings:get("pius_tnt.tnt_entity_velocity_mul")) or 2
+local player_velocity_mul = tonumber(minetest.settings:get("pius_tnt.player_velocity_mul")) or 10
+local entity_velocity_mul = tonumber(minetest.settings:get("pius_tnt.entity_velocity_mul")) or 10
+local multiplication_count_setting = tonumber(minetest.settings:get("pius_tnt.multiplication_count")) or 5
+local tnt_damage_nodes = minetest.settings:get_bool("pius_tnt.damage_nodes") or false
+local tnt_damage_entities = minetest.settings:get_bool("pius_tnt.damage_entities") or false
 local registered_nodes = minetest.registered_nodes
 local registered_entities = minetest.registered_entities
 local registered_items = minetest.registered_items
@@ -58,6 +59,20 @@ minetest.register_on_mods_loaded(function()
 		}
 	end
 end)
+
+local function spread(template)
+    local result = {}
+    for key, value in pairs(template) do
+        result[key] = value
+    end
+
+    return function(table)
+        for key, value in pairs(table) do
+            result[key] = value
+        end
+        return result
+    end
+end
 
 local function rand_pos(center, pos, radius)
 	local def
@@ -191,7 +206,7 @@ local function entity_physics(pos, radius, drops, in_water)
 				end
 				obj:set_hp(hp)
 			end
-		elseif obj:get_entity_name() ~= "tnt_revamped:empty_tnt_entity" then
+		elseif obj:get_entity_name() ~= "pius_tnt:empty_tnt_entity" then
 			local do_damage = true
 			local do_knockback = true
 			local entity_drops = {}
@@ -355,10 +370,13 @@ function tnt.boom(pos, def, owner, in_water)
 	add_effects(pos, radius, drops)
 	log("action", "A TNT explosion occurred at " .. pos_to_string(pos) ..
 		" with radius " .. radius)
+	if def.multiplication_count > 0 then
+		tnt.create_entity(pos, def, owner)
+	end
 end
 
 function tnt.create_entity(pos, def, owner)
-	local obj = add_entity(pos, "tnt_revamped:empty_tnt_entity")
+	local obj = add_entity(pos, "pius_tnt:empty_tnt_entity")
 	local ent = obj:get_luaentity()
 
 	if ent then
@@ -390,7 +408,12 @@ function tnt.create_entity(pos, def, owner)
 
 		obj:set_properties({textures = def.entity_tiles, visual = "cube", visual_size = def.visual_size})
 
-		ent:setup(def)
+		local def1 = spread(def) { multiplication_count = multiplication_count_setting }
+		if def.multiplication_count then
+			def1.multiplication_count = def.multiplication_count - 1
+		end
+
+		ent:setup(def1)
 	end
 
 	return obj

@@ -2,7 +2,7 @@ if not tnt then
 	tnt = {}
 end
 
-local modpath = minetest.get_modpath("tnt_revamped")
+local modpath = minetest.get_modpath("pius_tnt")
 local format = string.format
 
 dofile(format("%s/effects.lua", modpath))

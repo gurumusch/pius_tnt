@@ -1,7 +1,7 @@
 if minetest.registered_nodes["tnt:tnt"] then
 	tnt.register_tnt({
 		name = "tnt:tnt",
-		description = "TNT",
+		description = "Pius' TNT",
 		radius = tonumber(minetest.settings:get("tnt_radius")) or 3,
 		strength = 1000,
 		time = 4,
@@ -14,9 +14,9 @@ if minetest.registered_nodes["tnt:tnt"] then
 	minetest.unregister_item("tnt:tnt_burning")
 end
 
-local tnt_damage_nodes = minetest.settings:get_bool("tnt_revamped.damage_nodes") or false
+local tnt_damage_nodes = minetest.settings:get_bool("pius_tnt.damage_nodes") or false
 
-if minetest.settings:get("tnt_revamped.explosion") == "explosions" then
+if minetest.settings:get("pius_tnt.explosion") == "explosions" then
 	local old_boom = tnt.boom
 	tnt.boom = function(pos, def, owner, in_water)
 		if not in_water or tnt_damage_nodes then

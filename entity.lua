@@ -7,6 +7,7 @@ local boom = tnt.boom
 local quick_flow = tnt.quick_flow
 local new = vector.new
 local water_nodes = {}
+local multiplication_count = tonumber(minetest.settings:get("pius_tnt.multiplication_count")) or 2
 
 minetest.register_on_mods_loaded(function() 
 	for name, def in pairs(minetest.registered_nodes) do
@@ -19,7 +20,7 @@ minetest.register_on_mods_loaded(function()
 	boom = tnt.boom
 end)
 
-minetest.register_entity("tnt_revamped:empty_tnt_entity", {
+minetest.register_entity("pius_tnt:empty_tnt_entity", {
 	name = "empty_tnt_entity",
 	flow_check_step = 0,
 	flow_check = 0.2,
